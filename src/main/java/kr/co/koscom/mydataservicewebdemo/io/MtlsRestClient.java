@@ -15,9 +15,14 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
-public class MtlsRestClient {
+import kr.co.koscom.mydataservicewebdemo.config.MydataServiceConfig;
 
-	public MtlsRestClient() {
+public class MtlsRestClient {
+	
+	private MydataServiceConfig context;
+
+	public MtlsRestClient(MydataServiceConfig context) {
+		this.context = context;
 		
 	}
 	
