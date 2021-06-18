@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import kr.co.koscom.mydataservicewebdemo.config.MydataServiceContext;
-import kr.co.koscom.mydataservicewebdemo.model.AU11Request;
 
 @RestController
 public class CustomController {

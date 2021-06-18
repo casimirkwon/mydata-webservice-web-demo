@@ -10,40 +10,59 @@ import java.security.cert.CertificateException;
 
 import javax.net.ssl.SSLContext;
 
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-import kr.co.koscom.mydataservicewebdemo.config.MydataServiceConfig;
+import kr.co.koscom.mydataservicewebdemo.config.MydataServiceContext;
+import kr.co.koscom.mydataservicewebdemo.security.MtlsSerialNumberVerifier;
 
+@Component
 public class MtlsRestClient {
-	
-	private MydataServiceConfig context;
 
-	public MtlsRestClient(MydataServiceConfig context) {
-		this.context = context;
-		
-	}
+	@Autowired
+	private MydataServiceContext context;
 	
-	public Object request(String url, Object data) {
-		HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+	private HttpClient httpClient;
+
+	public MtlsRestClient() {
 		SSLContext sslContext = null;
+		SSLConnectionSocketFactory sslsf = null;
 		try {
 			sslContext = SSLContextBuilder.create()
-					.loadKeyMaterial((File)null, null, null)
-					.loadTrustMaterial((File)null, null)
+					.loadKeyMaterial(new File(context.getService().getKeyStorePath()),
+							context.getService().getKeyStorePassword().toCharArray(),
+							context.getService().getKeyStorePassword().toCharArray())
+					.loadTrustMaterial(new File(context.getService().getTrustStorePath()),
+							context.getService().getTrustStorePassword().toCharArray())
 					.build();
+			sslsf = new SSLConnectionSocketFactory(sslContext, 
+					new String[] { "TLSv1.3" }, 
+					null,
+					new MtlsSerialNumberVerifier(SSLConnectionSocketFactory.getDefaultHostnameVerifier(), context.getDataProviders()) );
 		} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException
 				| CertificateException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-				
-		CloseableHttpClient httpClient = HttpClientBuilder.create()
-				.setSSLContext(sslContext)
+
+		this.httpClient = HttpClientBuilder.create()
+				.setSSLSocketFactory(sslsf)
 				.build();
+
+	}
+
+	public Object request(String url, Object data) {
+
+
+//		CloseableHttpClient httpClient = HttpClientBuilder.create()
+//				.setSSLContext(sslContext)
+//				.build();
 
 		return null;
 	}
+	
 }
