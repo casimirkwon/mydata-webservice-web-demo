@@ -58,10 +58,6 @@ public class MtlsRestClient {
 	public Object request(String url, Object data) {
 
 
-//		CloseableHttpClient httpClient = HttpClientBuilder.create()
-//				.setSSLContext(sslContext)
-//				.build();
-
 		return null;
 	}
 	
