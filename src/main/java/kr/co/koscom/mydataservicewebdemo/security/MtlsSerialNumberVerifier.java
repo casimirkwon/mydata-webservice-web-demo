@@ -1,28 +1,27 @@
 package kr.co.koscom.mydataservicewebdemo.security;
 
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
-import javax.naming.InvalidNameException;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.ldap.LdapName;
-import javax.naming.ldap.Rdn;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
-import javax.security.auth.x500.X500Principal;
 
 import org.apache.http.conn.util.DnsUtils;
+import org.bouncycastle.asn1.x500.RDN;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import kr.co.koscom.mydataservicewebdemo.config.DataProviderConfig;
 
 public class MtlsSerialNumberVerifier implements HostnameVerifier {
+	
+	private static Logger logger = LoggerFactory.getLogger(MtlsSerialNumberVerifier.class);
+	
 	private HostnameVerifier delegated;
 	private Map<String, DataProviderConfig> providers;
 
@@ -35,22 +34,18 @@ public class MtlsSerialNumberVerifier implements HostnameVerifier {
 	public boolean verify(String hostname, SSLSession session) {
 		if (delegated.verify(hostname, session)) {
 			// verify serial number
-
 			try {
 				final Certificate[] certs = session.getPeerCertificates();
 				final X509Certificate x509 = (X509Certificate) certs[0];
 
-				final X500Principal subjectPrincipal = x509.getSubjectX500Principal();
-				final String serialNumber = extransSerialNumberFromSubject(subjectPrincipal.getName(X500Principal.RFC2253));
+				final String serialNumber = extractSerialNumberFromSubject(x509);
 				if (serialNumber == null) {
 					throw new SSLException("Certificate subject for <" + hostname + "> doesn't contain "
 							+ "a serialnumber");
 				}
 				
 				return matchSerialNumber(providers, hostname, serialNumber);
-
 			} catch (SSLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		} 
@@ -68,34 +63,20 @@ public class MtlsSerialNumberVerifier implements HostnameVerifier {
 		return false;
 	}
 
-	static String extransSerialNumberFromSubject(final String subjectPrincipal) throws SSLException {
-		if (subjectPrincipal == null) {
-			return null;
-		}
+	static String extractSerialNumberFromSubject(final X509Certificate cert) throws SSLException {
+		
 		try {
-			final LdapName subjectDN = new LdapName(subjectPrincipal);
-			final List<Rdn> rdns = subjectDN.getRdns();
-			for (int i = rdns.size() - 1; i >= 0; i--) {
-				final Rdn rds = rdns.get(i);
-				final Attributes attributes = rds.toAttributes();
-				final Attribute serialnumber = attributes.get("serailnumber");
-				if (serialnumber != null) {
-					try {
-						final Object value = serialnumber.get();
-						if (value != null) {
-							return value.toString();
-						}
-					} catch (final NoSuchElementException ignore) {
-						// ignore exception
-					} catch (final NamingException ignore) {
-						// ignore exception
-					}
-				}
+			RDN serialNumber = new JcaX509CertificateHolder(cert).getSubject().getRDNs(BCStyle.SERIALNUMBER)[0];
+			if (serialNumber == null) {
+				throw new SSLException("subject's serialnumber is not found in certificate");
 			}
-			return null;
-		} catch (final InvalidNameException e) {
-			throw new SSLException(subjectPrincipal + " is not a valid X500 distinguished name");
+			logger.info("server cert's serialnumber : " + serialNumber.getFirst().getValue().toString());
+			return serialNumber.getFirst().getValue().toString();
+		} catch (CertificateEncodingException e) {
+			e.printStackTrace();
+			throw new SSLException("invalid certifiate");
 		}
+		
 	}
 
 }
