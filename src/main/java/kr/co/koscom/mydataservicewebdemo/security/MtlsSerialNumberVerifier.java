@@ -67,7 +67,7 @@ public class MtlsSerialNumberVerifier implements HostnameVerifier {
 		
 		try {
 			RDN [] serialNumbers = new JcaX509CertificateHolder(cert).getSubject().getRDNs(BCStyle.SERIALNUMBER);
-			if (serialNumbers == null || serialNumbers[0] == null) {
+			if (serialNumbers == null || serialNumbers.length == 0) {
 				return null;
 			}
 			logger.info("server cert's serialnumber : " + serialNumbers[0].getFirst().getValue().toString());
