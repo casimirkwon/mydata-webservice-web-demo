@@ -16,17 +16,25 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 
 import kr.co.koscom.mydataservicewebdemo.config.MydataServiceContext;
 import kr.co.koscom.mydataservicewebdemo.security.MtlsSerialNumberVerifier;
@@ -36,67 +44,102 @@ public class MtlsRestClient {
 
 	@Autowired
 	private MydataServiceContext context;
-	
+
 	private HttpClient httpClient;
-	
+
 	private RestTemplate restTemplate;
 
-	public MtlsRestClient() {
-		SSLContext sslContext = null;
-		SSLConnectionSocketFactory sslsf = null;
-		try {
-			sslContext = SSLContextBuilder.create()
-					.loadKeyMaterial(new File(context.getService().getKeyStorePath()),
-							context.getService().getKeyStorePassword().toCharArray(),
-							context.getService().getKeyStorePassword().toCharArray())
-					.loadTrustMaterial(new File(context.getService().getTrustStorePath()),
-							context.getService().getTrustStorePassword().toCharArray())
-					.build();
-			sslsf = new SSLConnectionSocketFactory(sslContext, 
-					new String[] { "TLSv1.3" }, 
-					null,
-					new MtlsSerialNumberVerifier(SSLConnectionSocketFactory.getDefaultHostnameVerifier(), context.getDataProviders()) );
-		} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException
-				| CertificateException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	public MtlsRestClient(@Value("${io.useMtls:false}") boolean useMtls) {
+
+		if (useMtls) {
+			SSLContext sslContext = null;
+			SSLConnectionSocketFactory sslsf = null;
+			try {
+				sslContext = SSLContextBuilder.create()
+						.loadKeyMaterial(new File(context.getService().getKeyStorePath()),
+								context.getService().getKeyStorePassword().toCharArray(),
+								context.getService().getKeyStorePassword().toCharArray())
+						.loadTrustMaterial(new File(context.getService().getTrustStorePath()),
+								context.getService().getTrustStorePassword().toCharArray())
+						.build();
+				sslsf = new SSLConnectionSocketFactory(sslContext, new String[] { "TLSv1.3" }, null,
+						new MtlsSerialNumberVerifier(SSLConnectionSocketFactory.getDefaultHostnameVerifier(),
+								context.getDataProviders()));
+			} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException
+					| CertificateException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			this.httpClient = HttpClientBuilder.create().setSSLSocketFactory(sslsf).build();
+		} else {
+			this.httpClient = HttpClientBuilder.create().build();
 		}
 
-		this.httpClient = HttpClientBuilder.create()
-				.setSSLSocketFactory(sslsf)
-				.build();
+		HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(
+				this.httpClient);
 
-		HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(this.httpClient);
-		
 		this.restTemplate = new RestTemplate(clientHttpRequestFactory);
 		this.restTemplate.getMessageConverters().add(new ObjectToUrlEncodedConverter(new ObjectMapper()));
-		
+		this.restTemplate.setErrorHandler(new ResponseErrorHandler() {
+		    @Override
+		    public boolean hasError(ClientHttpResponse response) throws IOException {
+		        return false; 
+		    }
+
+		    @Override
+		    public void handleError(ClientHttpResponse response) throws IOException {
+		    }
+		});
+
 	}
 
-	public ResponseEntity<JsonNode> requestAsGet(String url, Map<String, String> queryParams) {
-		HttpHeaders headers = new HttpHeaders();
-		//headers.setContentType(MediaType.APPLICATION_JSON);
+	public ResponseEntity<JsonNode> requestAsGet(String url, Object data) {
+		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+		Map<String, String> map = objectMapper.convertValue(data, new TypeReference<Map<String, String>>() {
+		});
 
+		LinkedMultiValueMap<String, String> linkedMultiValueMap = new LinkedMultiValueMap<>();
+		map.entrySet().forEach(e -> linkedMultiValueMap.add(e.getKey(), e.getValue()));
+
+		return requestAsGet(url, linkedMultiValueMap);
+	}
+
+	public ResponseEntity<JsonNode> requestAsGet(String url, MultiValueMap<String, String> queryParams) {
+		HttpHeaders headers = makeCommonRequestHeaders();
 		HttpEntity<Object> request = new HttpEntity<>(headers);
-		
-		return restTemplate.exchange(url, HttpMethod.GET, request, JsonNode.class, queryParams);
+
+		return restTemplate.exchange(
+				UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.GET,
+				request, JsonNode.class);
 	}
 
 	public ResponseEntity<JsonNode> requestAsPostJson(String url, Object data, Map<String, String> queryParams) {
-		HttpHeaders headers = new HttpHeaders();
+		HttpHeaders headers = makeCommonRequestHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		HttpEntity<Object> request = new HttpEntity<>(data, headers);
-		
+
 		return restTemplate.exchange(url, HttpMethod.POST, request, JsonNode.class, queryParams);
-	}	
-	
-	public ResponseEntity<JsonNode> requestAsPostFormUrlEncoded(String url, Object data, Map<String, String> queryParams) {
-		HttpHeaders headers = new HttpHeaders();
+	}
+
+	public ResponseEntity<JsonNode> requestAsPostFormUrlEncoded(String url, Object data,
+			Map<String, String> queryParams) {
+		HttpHeaders headers = makeCommonRequestHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
 		HttpEntity<Object> request = new HttpEntity<>(data, headers);
-		
+
 		return restTemplate.exchange(url, HttpMethod.POST, request, JsonNode.class, queryParams);
-	}	
+	}
+
+	private HttpHeaders makeCommonRequestHeaders() {
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("ci", "TEF0101/AsCfLyJMF4bNFu4oWUHopstoUokAi2nsZtM78tch8SeegAHM9P8hJG1vpNe1RcvPRrl3b/MOC9999998");
+		headers.add("x-tranId", "1234567890");
+
+		return headers;
+	}
+
 }
