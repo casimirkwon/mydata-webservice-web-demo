@@ -66,12 +66,12 @@ public class MtlsSerialNumberVerifier implements HostnameVerifier {
 	static String extractSerialNumberFromSubject(final X509Certificate cert) throws SSLException {
 		
 		try {
-			RDN serialNumber = new JcaX509CertificateHolder(cert).getSubject().getRDNs(BCStyle.SERIALNUMBER)[0];
-			if (serialNumber == null) {
-				throw new SSLException("subject's serialnumber is not found in certificate");
+			RDN [] serialNumbers = new JcaX509CertificateHolder(cert).getSubject().getRDNs(BCStyle.SERIALNUMBER);
+			if (serialNumbers == null || serialNumbers[0] == null) {
+				return null;
 			}
-			logger.info("server cert's serialnumber : " + serialNumber.getFirst().getValue().toString());
-			return serialNumber.getFirst().getValue().toString();
+			logger.info("server cert's serialnumber : " + serialNumbers[0].getFirst().getValue().toString());
+			return serialNumbers[0].getFirst().getValue().toString();
 		} catch (CertificateEncodingException e) {
 			e.printStackTrace();
 			throw new SSLException("invalid certifiate");
