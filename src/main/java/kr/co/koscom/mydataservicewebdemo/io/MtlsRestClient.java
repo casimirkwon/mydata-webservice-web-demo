@@ -9,6 +9,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.net.ssl.SSLContext;
 
 import org.apache.http.client.HttpClient;
@@ -48,10 +49,16 @@ public class MtlsRestClient {
 	private HttpClient httpClient;
 
 	private RestTemplate restTemplate;
+	
+	private boolean useMtls;
 
 	public MtlsRestClient(@Value("${io.useMtls:false}") boolean useMtls) {
-
-		if (useMtls) {
+		this.useMtls = useMtls;
+	}
+	
+	@PostConstruct
+	private void init()  {
+		if (this.useMtls) {
 			SSLContext sslContext = null;
 			SSLConnectionSocketFactory sslsf = null;
 			try {
@@ -67,7 +74,6 @@ public class MtlsRestClient {
 								context.getDataProviders()));
 			} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException
 					| CertificateException | IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
@@ -91,7 +97,6 @@ public class MtlsRestClient {
 		    public void handleError(ClientHttpResponse response) throws IOException {
 		    }
 		});
-
 	}
 
 	public ResponseEntity<JsonNode> requestAsGet(String url, Object data) {
