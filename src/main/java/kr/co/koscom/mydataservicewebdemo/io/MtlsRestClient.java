@@ -69,7 +69,7 @@ public class MtlsRestClient {
 						.loadTrustMaterial(new File(context.getService().getTrustStorePath()),
 								context.getService().getTrustStorePassword().toCharArray())
 						.build();
-				sslsf = new SSLConnectionSocketFactory(sslContext, new String[] { "TLSv1.3" }, null,
+				sslsf = new SSLConnectionSocketFactory(sslContext, new String[] { "TLSv1.2", "TLSv1.3" }, null,
 						new MtlsSerialNumberVerifier(SSLConnectionSocketFactory.getDefaultHostnameVerifier(),
 								context.getDataProviders()));
 			} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException
@@ -141,7 +141,7 @@ public class MtlsRestClient {
 
 	private HttpHeaders makeCommonRequestHeaders() {
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("ci", "TEF0101/AsCfLyJMF4bNFu4oWUHopstoUokAi2nsZtM78tch8SeegAHM9P8hJG1vpNe1RcvPRrl3b/MOC9999998");
+		headers.add("ci", "TEF0101/AsCfLyJMF4bNFu4oWUHopstoUokAi2nsZtM78tch8SeegAHM9P8hJG1vpNe1RcvPRrl3b/MOC9999999");
 		headers.add("x-tranId", "1234567890");
 
 		return headers;

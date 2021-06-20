@@ -53,14 +53,14 @@ public class MtlsSerialNumberVerifier implements HostnameVerifier {
 		return false;
 	}
 
-	static boolean matchSerialNumber(Map<String, DataProviderConfig> providers, String hostname, String serialNumber) {
+	static boolean matchSerialNumber(Map<String, DataProviderConfig> providers, String hostname, String serialNumber) throws SSLException {
 		for (DataProviderConfig provider : providers.values()) {
 			if (hostname.equalsIgnoreCase(provider.getHost())
 					&& DnsUtils.normalize(serialNumber).equals(DnsUtils.normalize(provider.getMtlsSerialNumber())))
 				return true;
 		}
 
-		return false;
+		throw new SSLException("Certificate subject's serialnumber for <" + hostname + "> doesn't match");
 	}
 
 	static String extractSerialNumberFromSubject(final X509Certificate cert) throws SSLException {
