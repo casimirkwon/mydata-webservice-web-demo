@@ -14,9 +14,9 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>mydata-service-web-demo</name>
 	<description>mydata-service-web-demo</description>
-<!-- 	<properties>
-		<java.version>1.8</java.version>
-	</properties> -->
+    <properties>
+		<java.version>11</java.version>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
