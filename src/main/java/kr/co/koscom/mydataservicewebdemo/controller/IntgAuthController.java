@@ -2,6 +2,7 @@ package kr.co.koscom.mydataservicewebdemo.controller;
 
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -35,14 +36,19 @@ public class IntgAuthController {
 	@Autowired
 	MtlsRestClient restClient;
 	
+	@Autowired
+	ObjectMapper objectMapper;
+	
+	@PostConstruct
+	private void init() {
+		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+	}
+	
 	@ApiOperation(value = "AU11 - oauth 2.0 token API")
 	@PostMapping(value = "/oauth/2.0/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_VALUE )
 	public AU11Response token(HttpServletRequest servletRequest,
 			HttpServletResponse servletResponse,
 			AU11Request request) {
-		
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 		
 		Map<String, String> map = 
 				objectMapper.convertValue(request, new TypeReference<Map<String, String>>() {});

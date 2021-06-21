@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -37,16 +38,24 @@ public class MydataClientSignController {
 	
 	@Autowired
 	MtlsRestClient restClient;
-
+	
+	@Autowired
+	ObjectMapper objectMapper;
+	
+	@Autowired
+	ObjectMapper objectMapperCamelCase;
+	
+	@PostConstruct
+	private void init() {
+		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+		objectMapperCamelCase.setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE);
+	}
 
     @RequestMapping(value = "/certlist", method = RequestMethod.GET)
     public String certlist(HttpServletRequest servletRequest,
     		HttpServletResponse servletResponse) {
     	
     	MydataSignClientWrapper wrapper = MydataSignClientWrapper.getInstance();
-    	
-    	ObjectMapper objectMapper = new ObjectMapper();
-    	objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     	
     	try {
 			List<CertificateAndKey> certList = wrapper.getCertList();
@@ -81,9 +90,6 @@ public class MydataClientSignController {
     		@RequestParam(value = "certId") int certId) {
     	
     	MydataSignClientWrapper wrapper = MydataSignClientWrapper.getInstance();
-    	
-    	ObjectMapper objectMapper = new ObjectMapper();
-    	objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE);
     	
        /*
         
@@ -132,7 +138,7 @@ public class MydataClientSignController {
         
     	try {
 
-	    	return wrapper.makeSign(objectMapper.writeValueAsString(request), certId);
+	    	return wrapper.makeSign(objectMapperCamelCase.writeValueAsString(request), certId);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new MydataException("error");

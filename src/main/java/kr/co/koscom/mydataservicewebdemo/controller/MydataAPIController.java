@@ -1,5 +1,6 @@
 package kr.co.koscom.mydataservicewebdemo.controller;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -20,7 +21,6 @@ import io.swagger.annotations.ApiOperation;
 import kr.co.koscom.mydataservicewebdemo.config.DataProviderConfig;
 import kr.co.koscom.mydataservicewebdemo.config.MydataServiceContext;
 import kr.co.koscom.mydataservicewebdemo.io.MtlsRestClient;
-import kr.co.koscom.mydataservicewebdemo.model.AU11Response;
 import kr.co.koscom.mydataservicewebdemo.model.EF01Request;
 import kr.co.koscom.mydataservicewebdemo.model.EF01Response;
 import kr.co.koscom.mydataservicewebdemo.model.MydataException;
@@ -33,6 +33,14 @@ public class MydataAPIController {
 	
 	@Autowired
 	MtlsRestClient restClient;
+	
+	@Autowired
+	ObjectMapper objectMapper;
+	
+	@PostConstruct
+	private void init() {
+		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+	}
 
 	@ApiOperation(value = "Prepaid Accounts List")
     @GetMapping(value = "/v1/efin/prepaid", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -53,9 +61,6 @@ public class MydataAPIController {
         
         EF01Response ret;
 		try {
-			ObjectMapper objectMapper = new ObjectMapper();
-			objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-			
 			ret = objectMapper.readValue(response.getBody().asText(), EF01Response.class);
 			
 			return ret;
