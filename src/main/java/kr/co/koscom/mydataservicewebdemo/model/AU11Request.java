@@ -71,4 +71,10 @@ public class AU11Request {
 	
 	@ApiParam(value = "재전송공격 방지정보 2 (ucpidNonce)", defaultValue = "WGOcYBte6JHLi-B_KfJmMg==")
 	private String ucpidNonce;
+	
+	@ApiParam(value = "인증사업자 트랜잭션 아이디", defaultValue = "")
+	private String certTxId;
+	
+	@ApiParam(value = "서비스번호", defaultValue = "MOC1234567202105200001")
+	private String serviceId;
 }
