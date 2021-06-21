@@ -1,0 +1,10 @@
+인증서비밀번호: 1q2w3e4r!!
+
+DN: cn=SignKorea_MyData_Server,ou=테스트지점,ou=테스트회사,ou=테스트업종,o=SignKorea,c=KR
+ss: 2021060199
+
+DN: cn=SignKorea_MyData_User,ou=테스트지점,ou=테스트회사,ou=테스트업종,o=SignKorea,c=KR
+ss: 2021060199999
+
+cpCode : C0123456789A
+ispUrlInfo : www.mydata.co.kr
