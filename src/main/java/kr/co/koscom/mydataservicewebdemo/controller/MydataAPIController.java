@@ -61,7 +61,7 @@ public class MydataAPIController {
 			return ret;
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
-			throw new MydataException("error while read reponse with type");
+			throw new MydataException("error while reading response");
 		}
     }
     
