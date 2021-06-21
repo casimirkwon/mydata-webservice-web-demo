@@ -11,12 +11,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 
 import io.swagger.annotations.ApiOperation;
 import kr.co.koscom.mydataservicewebdemo.config.DataProviderConfig;
 import kr.co.koscom.mydataservicewebdemo.config.MydataServiceContext;
 import kr.co.koscom.mydataservicewebdemo.io.MtlsRestClient;
+import kr.co.koscom.mydataservicewebdemo.model.AU11Response;
 import kr.co.koscom.mydataservicewebdemo.model.EF01Request;
 import kr.co.koscom.mydataservicewebdemo.model.EF01Response;
 import kr.co.koscom.mydataservicewebdemo.model.MydataException;
@@ -47,8 +51,18 @@ public class MydataAPIController {
         ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request);
         servletResponse.setStatus(response.getStatusCodeValue());
         
-        //FIXME test code
-        return new EF01Response();
+        EF01Response ret;
+		try {
+			ObjectMapper objectMapper = new ObjectMapper();
+			objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+			
+			ret = objectMapper.readValue(response.getBody().asText(), EF01Response.class);
+			
+			return ret;
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+			throw new MydataException("error while read reponse with type");
+		}
     }
     
     
