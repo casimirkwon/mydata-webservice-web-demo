@@ -2,10 +2,14 @@ package kr.co.koscom.mydataservicewebdemo.model;
 
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
 import io.swagger.annotations.ApiParam;
 import lombok.Data;
 
 @Data
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class AU11Request {
 	
 	//MD_O100000001_B100000002_P100000001_Q100000001_20210805011015_000000000002

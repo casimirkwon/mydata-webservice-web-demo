@@ -2,7 +2,6 @@ package kr.co.koscom.mydataservicewebdemo.controller;
 
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -12,11 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 import io.swagger.annotations.ApiOperation;
 import kr.co.koscom.mio.MydataSignVerifyWrapper;
@@ -34,15 +33,10 @@ public class IntgAuthController {
 	private MydataServiceContext context;
 	
 	@Autowired
-	MtlsRestClient restClient;
+	private MtlsRestClient restClient;
 	
 	@Autowired
-	ObjectMapper objectMapper;
-	
-	@PostConstruct
-	private void init() {
-		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-	}
+	private ObjectMapper objectMapper;
 	
 	@ApiOperation(value = "AU11 - oauth 2.0 token API")
 	@PostMapping(value = "/oauth/2.0/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_VALUE )
@@ -71,15 +65,15 @@ public class IntgAuthController {
     	String endpoint = dataProvider.getEndpoint();
     	endpoint += requestPath;
     	
-        ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request);
-        servletResponse.setStatus(response.getStatusCodeValue());
-		
-        AU11Response ret;
+    	
 		try {
-			ret = objectMapper.readValue(response.getBody().asText(), AU11Response.class);
+	        ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request);
+	        servletResponse.setStatus(response.getStatusCodeValue());
+	        
+	        AU11Response ret = objectMapper.readValue(response.getBody().asText(), AU11Response.class);
 			
 			return ret;
-		} catch (JsonProcessingException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			throw new MydataException("error while reading response");
 		}

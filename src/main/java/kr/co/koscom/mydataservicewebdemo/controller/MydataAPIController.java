@@ -36,11 +36,6 @@ public class MydataAPIController {
 	
 	@Autowired
 	ObjectMapper objectMapper;
-	
-	@PostConstruct
-	private void init() {
-		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-	}
 
 	@ApiOperation(value = "Prepaid Accounts List")
     @GetMapping(value = "/v1/efin/prepaid", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -56,15 +51,14 @@ public class MydataAPIController {
     	String endpoint = dataProvider.getEndpoint();
     	endpoint += requestPath;
     	
-        ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request);
-        servletResponse.setStatus(response.getStatusCodeValue());
-        
-        EF01Response ret;
 		try {
-			ret = objectMapper.readValue(response.getBody().asText(), EF01Response.class);
+	        ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request);
+	        servletResponse.setStatus(response.getStatusCodeValue());
+	        
+	        EF01Response ret = objectMapper.readValue(response.getBody().asText(), EF01Response.class);
 			
 			return ret;
-		} catch (JsonProcessingException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			throw new MydataException("error while reading response");
 		}

@@ -41,15 +41,6 @@ public class MydataClientSignController {
 	
 	@Autowired
 	ObjectMapper objectMapper;
-	
-	@Autowired
-	ObjectMapper objectMapperCamelCase;
-	
-	@PostConstruct
-	private void init() {
-		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-		objectMapperCamelCase.setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE);
-	}
 
     @RequestMapping(value = "/certlist", method = RequestMethod.GET)
     public String certlist(HttpServletRequest servletRequest,
@@ -138,7 +129,7 @@ public class MydataClientSignController {
         
     	try {
 
-	    	return wrapper.makeSign(objectMapperCamelCase.writeValueAsString(request), certId);
+	    	return wrapper.makeSign(objectMapper.writeValueAsString(request), certId);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new MydataException("error");
