@@ -1,5 +1,6 @@
 package kr.co.koscom.mydataservicewebdemo.config;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -36,6 +37,16 @@ public class MydataServiceContext {
 
 	public void setId(String id) {
 		this.id = id;
+	}
+	
+	public Map<String, String> getDataProvidersCpCodeMap() {
+		HashMap<String, String> ret = new HashMap<>();
+		
+		this.dataProviders.forEach((key,value) -> {
+			ret.put(key, value.getCpCode());
+		});
+		
+		return ret;
 	}
 
 	@Override

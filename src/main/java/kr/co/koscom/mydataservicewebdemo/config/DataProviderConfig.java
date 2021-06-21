@@ -9,6 +9,8 @@ public class DataProviderConfig {
 	private String orgCode;
 	
 	private String mtlsSerialNumber;
+	
+	private String cpCode;
 
 	public String getHost() {
 		return host;
@@ -42,10 +44,18 @@ public class DataProviderConfig {
 		this.mtlsSerialNumber = mtlsSerialNumber;
 	}
 
+	public String getCpCode() {
+		return cpCode;
+	}
+
+	public void setCpCode(String cpCode) {
+		this.cpCode = cpCode;
+	}
+
 	@Override
 	public String toString() {
 		return "DataProviderConfig [host=" + host + ", endpoint=" + endpoint + ", orgCode=" + orgCode
-				+ ", mtlsSerialNumber=" + mtlsSerialNumber + "]";
+				+ ", mtlsSerialNumber=" + mtlsSerialNumber + ", cpCode=" + cpCode + "]";
 	}
 	
 }

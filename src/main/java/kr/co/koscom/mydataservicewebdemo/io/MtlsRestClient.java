@@ -120,23 +120,31 @@ public class MtlsRestClient {
 				request, JsonNode.class);
 	}
 
-	public ResponseEntity<JsonNode> requestAsPostJson(String url, Object data, Map<String, String> queryParams) {
+	public ResponseEntity<JsonNode> requestAsPostJson(String url, Object data) {
+		return requestAsPostJson(url, data, null);
+	}
+	
+	public ResponseEntity<JsonNode> requestAsPostJson(String url, Object data, MultiValueMap<String, String> queryParams) {
 		HttpHeaders headers = makeCommonRequestHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		HttpEntity<Object> request = new HttpEntity<>(data, headers);
 
-		return restTemplate.exchange(url, HttpMethod.POST, request, JsonNode.class, queryParams);
+		return restTemplate.exchange(UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST, request, JsonNode.class);
 	}
 
+	public ResponseEntity<JsonNode> requestAsPostFormUrlEncoded(String url, Object data) {
+		return requestAsPostFormUrlEncoded(url, data, null);
+	}
+	
 	public ResponseEntity<JsonNode> requestAsPostFormUrlEncoded(String url, Object data,
-			Map<String, String> queryParams) {
+			MultiValueMap<String, String> queryParams) {
 		HttpHeaders headers = makeCommonRequestHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
 		HttpEntity<Object> request = new HttpEntity<>(data, headers);
 
-		return restTemplate.exchange(url, HttpMethod.POST, request, JsonNode.class, queryParams);
+		return restTemplate.exchange(UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST, request, JsonNode.class);
 	}
 
 	private HttpHeaders makeCommonRequestHeaders() {
