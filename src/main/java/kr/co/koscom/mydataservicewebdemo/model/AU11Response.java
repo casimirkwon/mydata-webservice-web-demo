@@ -1,5 +1,8 @@
 package kr.co.koscom.mydataservicewebdemo.model;
 
+import lombok.Data;
+
+@Data
 public class AU11Response {
 	
 	private String txid;

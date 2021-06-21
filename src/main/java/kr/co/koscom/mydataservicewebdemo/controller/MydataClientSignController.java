@@ -27,6 +27,7 @@ import kr.co.koscom.mydataservicewebdemo.config.MydataServiceContext;
 import kr.co.koscom.mydataservicewebdemo.io.MtlsRestClient;
 import kr.co.koscom.mydataservicewebdemo.model.IntgAuthSignRequest;
 import kr.co.koscom.mydataservicewebdemo.model.IntgAuthSignResponse;
+import kr.co.koscom.mydataservicewebdemo.model.MydataException;
 
 @RestController
 public class MydataClientSignController {
@@ -69,7 +70,7 @@ public class MydataClientSignController {
 		} catch (Exception e) {
 			e.printStackTrace();
 			
-			return "error";
+			throw new MydataException("error");
 		}
     }
     
@@ -134,8 +135,7 @@ public class MydataClientSignController {
 	    	return wrapper.makeSign(objectMapper.writeValueAsString(request), certId);
 		} catch (Exception e) {
 			e.printStackTrace();
-			
-			return "error";
+			throw new MydataException("error");
 		}
     }
 }
