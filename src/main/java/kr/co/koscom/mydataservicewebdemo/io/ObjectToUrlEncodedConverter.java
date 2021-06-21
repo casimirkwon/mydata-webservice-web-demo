@@ -24,7 +24,6 @@ public class ObjectToUrlEncodedConverter implements HttpMessageConverter {
 
 	public ObjectToUrlEncodedConverter(ObjectMapper mapper) {
 		this.mapper = mapper;
-		this.mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 	}
 
 	@Override

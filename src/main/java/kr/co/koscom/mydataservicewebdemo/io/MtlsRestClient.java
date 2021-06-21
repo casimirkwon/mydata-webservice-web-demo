@@ -18,6 +18,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -49,16 +50,15 @@ public class MtlsRestClient {
 	private HttpClient httpClient;
 
 	private RestTemplate restTemplate;
-	
-	private boolean useMtls;
 
-	public MtlsRestClient(@Value("${io.useMtls:false}") boolean useMtls) {
-		this.useMtls = useMtls;
-	}
+	@Value("${io.useMtls:false}")
+	private boolean useMtls;
 	
+	private ObjectMapper objectMapper;
+
 	@PostConstruct
-	private void init()  {
-		if (this.useMtls) {
+	private void init() {
+		if (useMtls) {
 			SSLContext sslContext = null;
 			SSLConnectionSocketFactory sslsf = null;
 			try {
@@ -77,32 +77,37 @@ public class MtlsRestClient {
 				e.printStackTrace();
 			}
 
-			this.httpClient = HttpClientBuilder.create().setSSLSocketFactory(sslsf).build();
+			httpClient = HttpClientBuilder.create().setSSLSocketFactory(sslsf).build();
 		} else {
-			this.httpClient = HttpClientBuilder.create().build();
+			httpClient = HttpClientBuilder.create().build();
 		}
 
-		HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(
-				this.httpClient);
+		HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+		restTemplate = new RestTemplateBuilder(
+			rt -> rt.getInterceptors().add(
+					(request, body, execution) -> {
+							request.getHeaders().addAll(makeCommonRequestHeaders());
+							return execution.execute(request, body);				
+						}
+					))
+			.requestFactory(() -> clientHttpRequestFactory)
+			.additionalMessageConverters(new ObjectToUrlEncodedConverter(getObjectMapper()))
+			.errorHandler(new ResponseErrorHandler() {
+				@Override
+				public boolean hasError(ClientHttpResponse response) throws IOException {
+					return false;
+				}
 
-		this.restTemplate = new RestTemplate(clientHttpRequestFactory);
-		this.restTemplate.getMessageConverters().add(new ObjectToUrlEncodedConverter(new ObjectMapper()));
-		this.restTemplate.setErrorHandler(new ResponseErrorHandler() {
-		    @Override
-		    public boolean hasError(ClientHttpResponse response) throws IOException {
-		        return false; 
-		    }
-
-		    @Override
-		    public void handleError(ClientHttpResponse response) throws IOException {
-		    }
-		});
+				@Override
+				public void handleError(ClientHttpResponse response) throws IOException {
+				}
+			})
+			.build();
 	}
 
 	public ResponseEntity<JsonNode> requestAsGet(String url, Object data) {
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-		Map<String, String> map = objectMapper.convertValue(data, new TypeReference<Map<String, String>>() {
+		
+		Map<String, String> map = getObjectMapper().convertValue(data, new TypeReference<Map<String, String>>() {
 		});
 
 		LinkedMultiValueMap<String, String> linkedMultiValueMap = new LinkedMultiValueMap<>();
@@ -143,8 +148,15 @@ public class MtlsRestClient {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("ci", "TEF0101/AsCfLyJMF4bNFu4oWUHopstoUokAi2nsZtM78tch8SeegAHM9P8hJG1vpNe1RcvPRrl3b/MOC9999999");
 		headers.add("x-tranId", "1234567890");
-
 		return headers;
 	}
 
+	private ObjectMapper getObjectMapper() {
+		if(objectMapper != null) {
+			return objectMapper;
+		}
+		objectMapper = new ObjectMapper();
+		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+		return objectMapper;
+	}
 }
