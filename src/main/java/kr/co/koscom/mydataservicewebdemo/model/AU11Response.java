@@ -1,5 +1,12 @@
 package kr.co.koscom.mydataservicewebdemo.model;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
+import lombok.Data;
+
+@Data
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class AU11Response {
 	
 	private String txid;

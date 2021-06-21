@@ -1,48 +1,62 @@
 package kr.co.koscom.mydataservicewebdemo.controller;
 
-import javax.annotation.PostConstruct;
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 import io.swagger.annotations.ApiOperation;
+import kr.co.koscom.mio.MydataSignVerifyWrapper;
 import kr.co.koscom.mydataservicewebdemo.config.DataProviderConfig;
 import kr.co.koscom.mydataservicewebdemo.config.MydataServiceContext;
 import kr.co.koscom.mydataservicewebdemo.io.MtlsRestClient;
-import kr.co.koscom.mydataservicewebdemo.model.EF01Request;
-import kr.co.koscom.mydataservicewebdemo.model.EF01Response;
+import kr.co.koscom.mydataservicewebdemo.model.AU11Request;
+import kr.co.koscom.mydataservicewebdemo.model.AU11Response;
 import kr.co.koscom.mydataservicewebdemo.model.MydataException;
 
 @RestController
-public class MydataAPIController {
+public class IntgAuthController {
 	
 	@Autowired
-	MydataServiceContext context;
+	private MydataServiceContext context;
 	
 	@Autowired
-	MtlsRestClient restClient;
+	private MtlsRestClient restClient;
 	
 	@Autowired
-	ObjectMapper objectMapper;
-
-	@ApiOperation(value = "Prepaid Accounts List")
-    @GetMapping(value = "/v1/efin/prepaid", produces = MediaType.APPLICATION_JSON_VALUE)
-    public EF01Response v1_efin_prepaid(@Valid @ModelAttribute EF01Request request, HttpServletRequest servletRequest,
-    		HttpServletResponse servletResponse) {
+	private ObjectMapper objectMapper;
+	
+	@ApiOperation(value = "AU11 - oauth 2.0 token API")
+	@PostMapping(value = "/oauth/2.0/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_VALUE )
+	public AU11Response token(HttpServletRequest servletRequest,
+			HttpServletResponse servletResponse,
+			AU11Request request) {
+		
+		Map<String, String> map = 
+				objectMapper.convertValue(request, new TypeReference<Map<String, String>>() {});
+		
+		MydataSignVerifyWrapper wrapper = MydataSignVerifyWrapper.getInstance(context.getDataProvidersCpCodeMap());
+		
+		try {
+			wrapper.verifySign(map);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new MydataException("error while verifying signature or processing ucpid request");
+		}
+		
     	String requestPath = servletRequest.getRequestURI();
-    	
     	DataProviderConfig dataProvider = context.getDataProviders().get(request.getOrgCode());
     	
     	if(dataProvider == null)
@@ -51,18 +65,17 @@ public class MydataAPIController {
     	String endpoint = dataProvider.getEndpoint();
     	endpoint += requestPath;
     	
+    	
 		try {
 	        ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request);
 	        servletResponse.setStatus(response.getStatusCodeValue());
 	        
-	        EF01Response ret = objectMapper.readValue(response.getBody().asText(), EF01Response.class);
+	        AU11Response ret = objectMapper.readValue(response.getBody().asText(), AU11Response.class);
 			
 			return ret;
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new MydataException("error while reading response");
 		}
-    }
-    
-    
+	}
 }

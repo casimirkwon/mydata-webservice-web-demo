@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,6 +28,7 @@ import kr.co.koscom.mydataservicewebdemo.config.MydataServiceContext;
 import kr.co.koscom.mydataservicewebdemo.io.MtlsRestClient;
 import kr.co.koscom.mydataservicewebdemo.model.IntgAuthSignRequest;
 import kr.co.koscom.mydataservicewebdemo.model.IntgAuthSignResponse;
+import kr.co.koscom.mydataservicewebdemo.model.MydataException;
 
 @RestController
 public class MydataClientSignController {
@@ -36,16 +38,15 @@ public class MydataClientSignController {
 	
 	@Autowired
 	MtlsRestClient restClient;
-
+	
+	@Autowired
+	ObjectMapper objectMapper;
 
     @RequestMapping(value = "/certlist", method = RequestMethod.GET)
     public String certlist(HttpServletRequest servletRequest,
     		HttpServletResponse servletResponse) {
     	
     	MydataSignClientWrapper wrapper = MydataSignClientWrapper.getInstance();
-    	
-    	ObjectMapper objectMapper = new ObjectMapper();
-    	objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     	
     	try {
 			List<CertificateAndKey> certList = wrapper.getCertList();
@@ -69,7 +70,7 @@ public class MydataClientSignController {
 		} catch (Exception e) {
 			e.printStackTrace();
 			
-			return "error";
+			throw new MydataException("error");
 		}
     }
     
@@ -80,9 +81,6 @@ public class MydataClientSignController {
     		@RequestParam(value = "certId") int certId) {
     	
     	MydataSignClientWrapper wrapper = MydataSignClientWrapper.getInstance();
-    	
-    	ObjectMapper objectMapper = new ObjectMapper();
-    	objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE);
     	
        /*
         
@@ -134,8 +132,7 @@ public class MydataClientSignController {
 	    	return wrapper.makeSign(objectMapper.writeValueAsString(request), certId);
 		} catch (Exception e) {
 			e.printStackTrace();
-			
-			return "error";
+			throw new MydataException("error");
 		}
     }
 }
