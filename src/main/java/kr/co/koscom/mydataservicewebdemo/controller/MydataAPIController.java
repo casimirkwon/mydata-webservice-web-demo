@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,10 +56,13 @@ public class MydataAPIController {
 	        ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request);
 	        servletResponse.setStatus(response.getStatusCodeValue());
 	        
-	        EF01Response ret = objectMapper.readValue(response.getBody().asText(), EF01Response.class);
-			
-			return ret;
-		} catch (Exception e) {
+	        if(response.getStatusCode() == HttpStatus.OK) {
+		        EF01Response ret = objectMapper.readValue(response.getBody().toString(), EF01Response.class);
+				
+				return ret;
+	        } else
+	        	throw new MydataException(String.format("http status is not 200 : received response { %s }", response.getBody().toPrettyString()));
+		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 			throw new MydataException("error while reading response");
 		}
