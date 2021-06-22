@@ -2,6 +2,7 @@ package kr.co.koscom.mydataservicewebdemo.io;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.Socket;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -15,7 +16,12 @@ import javax.net.ssl.SSLContext;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.ssl.PrivateKeyDetails;
+import org.apache.http.ssl.PrivateKeyStrategy;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -33,16 +39,20 @@ import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 
 import kr.co.koscom.mydataservicewebdemo.config.MydataServiceContext;
+import kr.co.koscom.mydataservicewebdemo.model.MydataException;
 import kr.co.koscom.mydataservicewebdemo.security.MtlsSerialNumberVerifier;
 
 @Component
 public class MtlsRestClient {
+	
+	private static Logger logger = LoggerFactory.getLogger(MtlsRestClient.class);
 
 	@Autowired
 	private MydataServiceContext context;
@@ -62,14 +72,20 @@ public class MtlsRestClient {
 			SSLContext sslContext = null;
 			SSLConnectionSocketFactory sslsf = null;
 			try {
-				sslContext = SSLContextBuilder.create()
+				sslContext = SSLContexts.custom()
 						.loadKeyMaterial(new File(context.getService().getKeyStorePath()),
 								context.getService().getKeyStorePassword().toCharArray(),
-								context.getService().getKeyStorePassword().toCharArray())
+								context.getService().getKeyStorePassword().toCharArray(),
+								new PrivateKeyStrategy() {
+									@Override
+									public String chooseAlias(Map<String, PrivateKeyDetails> aliases, Socket socket) {
+										return context.getService().getKeyStoreAlias();
+									}
+								})
 						.loadTrustMaterial(new File(context.getService().getTrustStorePath()),
 								context.getService().getTrustStorePassword().toCharArray())
 						.build();
-				sslsf = new SSLConnectionSocketFactory(sslContext, new String[] { "TLSv1.2", "TLSv1.3" }, null,
+				sslsf = new SSLConnectionSocketFactory(sslContext, new String[] { "TLSv1.3" }, null,
 						new MtlsSerialNumberVerifier(SSLConnectionSocketFactory.getDefaultHostnameVerifier(),
 								context.getDataProviders()));
 			} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException
@@ -91,7 +107,7 @@ public class MtlsRestClient {
 						}
 					))
 			.requestFactory(() -> clientHttpRequestFactory)
-			.additionalMessageConverters(new ObjectToUrlEncodedConverter(getObjectMapper()))
+			//.additionalMessageConverters(new ObjectToUrlEncodedConverter(getObjectMapper()))
 			.errorHandler(new ResponseErrorHandler() {
 				@Override
 				public boolean hasError(ClientHttpResponse response) throws IOException {
@@ -103,6 +119,8 @@ public class MtlsRestClient {
 				}
 			})
 			.build();
+		
+		restTemplate.getMessageConverters().add(new ObjectToUrlEncodedConverter(getObjectMapper()));
 	}
 
 	public ResponseEntity<JsonNode> requestAsGet(String url, Object data) {
@@ -119,10 +137,22 @@ public class MtlsRestClient {
 	public ResponseEntity<JsonNode> requestAsGet(String url, MultiValueMap<String, String> queryParams) {
 		HttpHeaders headers = makeCommonRequestHeaders();
 		HttpEntity<Object> request = new HttpEntity<>(headers);
-
-		return restTemplate.exchange(
+		ResponseEntity<String> response = restTemplate.exchange(
 				UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.GET,
-				request, JsonNode.class);
+				request, String.class);
+		
+		logger.info("response : " + response.toString());
+		try {
+			return new ResponseEntity<JsonNode>( objectMapper.readValue(response.getBody(), JsonNode.class), response.getStatusCode());
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+			throw new MydataException("error in reading response");
+		}
+	
+				
+//		return restTemplate.exchange(
+//				UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.GET,
+//				request, JsonNode.class);
 	}
 
 	public ResponseEntity<JsonNode> requestAsPostJson(String url, Object data) {
@@ -135,7 +165,11 @@ public class MtlsRestClient {
 
 		HttpEntity<Object> request = new HttpEntity<>(data, headers);
 
-		return restTemplate.exchange(UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST, request, JsonNode.class);
+		ResponseEntity<Object> response = restTemplate.exchange(UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST, request, Object.class);
+		
+		logger.info("response : " + response.toString());
+		return new ResponseEntity<JsonNode>((JsonNode) response.getBody(), response.getStatusCode());
+		//return restTemplate.exchange(UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST, request, JsonNode.class);
 	}
 
 	public ResponseEntity<JsonNode> requestAsPostFormUrlEncoded(String url, Object data) {
@@ -154,7 +188,7 @@ public class MtlsRestClient {
 
 	private HttpHeaders makeCommonRequestHeaders() {
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("ci", "TEF0101/AsCfLyJMF4bNFu4oWUHopstoUokAi2nsZtM78tch8SeegAHM9P8hJG1vpNe1RcvPRrl3b/MOC9999999");
+		//headers.add("ci", "TEF0101/AsCfLyJMF4bNFu4oWUHopstoUokAi2nsZtM78tch8SeegAHM9P8hJG1vpNe1RcvPRrl3b/MOC9999999");
 		headers.add("x-tranId", "1234567890");
 		return headers;
 	}
