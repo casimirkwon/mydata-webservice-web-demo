@@ -183,7 +183,20 @@ public class MtlsRestClient {
 
 		HttpEntity<Object> request = new HttpEntity<>(data, headers);
 
-		return restTemplate.exchange(UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST, request, JsonNode.class);
+		ResponseEntity<String> response = restTemplate.exchange(
+				UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST,
+				request, String.class);
+		
+		logger.info("response : " + response.toString());
+		try {
+			return new ResponseEntity<JsonNode>( objectMapper.readValue(response.getBody(), JsonNode.class), response.getStatusCode());
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+			throw new MydataException("error in reading response");
+		}
+
+		
+//		return restTemplate.exchange(UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST, request, JsonNode.class);
 	}
 
 	private HttpHeaders makeCommonRequestHeaders() {

@@ -67,7 +67,7 @@ public class IntgAuthController {
     	
     	
 		try {
-	        ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request);
+	        ResponseEntity<JsonNode> response = restClient.requestAsPostFormUrlEncoded(endpoint, request);
 	        servletResponse.setStatus(response.getStatusCodeValue());
 	        
 	        AU11Response ret = objectMapper.readValue(response.getBody().asText(), AU11Response.class);
