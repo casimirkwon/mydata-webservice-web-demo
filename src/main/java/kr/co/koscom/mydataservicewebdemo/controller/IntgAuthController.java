@@ -1,24 +1,20 @@
 package kr.co.koscom.mydataservicewebdemo.controller;
 
-import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 import io.swagger.annotations.ApiOperation;
-import kr.co.koscom.mio.MydataSignVerifyWrapper;
 import kr.co.koscom.mydataservicewebdemo.config.DataProviderConfig;
 import kr.co.koscom.mydataservicewebdemo.config.MydataServiceContext;
 import kr.co.koscom.mydataservicewebdemo.io.MtlsRestClient;
@@ -44,17 +40,17 @@ public class IntgAuthController {
 			HttpServletResponse servletResponse,
 			AU11Request request) {
 		
-		Map<String, String> map = 
-				objectMapper.convertValue(request, new TypeReference<Map<String, String>>() {});
-		
-		MydataSignVerifyWrapper wrapper = MydataSignVerifyWrapper.getInstance(context.getDataProvidersCpCodeMap());
-		
-		try {
-			wrapper.verifySign(map);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new MydataException("error while verifying signature or processing ucpid request");
-		}
+//		Map<String, String> map = 
+//				objectMapper.convertValue(request, new TypeReference<Map<String, String>>() {});
+//		
+//		MydataSignVerifyWrapper wrapper = MydataSignVerifyWrapper.getInstance(context.getDataProvidersCpCodeMap());
+//		
+//		try {
+//			wrapper.verifySign(map);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			throw new MydataException("error while verifying signature or processing ucpid request");
+//		}
 		
     	String requestPath = servletRequest.getRequestURI();
     	DataProviderConfig dataProvider = context.getDataProviders().get(request.getOrgCode());
@@ -70,10 +66,13 @@ public class IntgAuthController {
 	        ResponseEntity<JsonNode> response = restClient.requestAsPostFormUrlEncoded(endpoint, request);
 	        servletResponse.setStatus(response.getStatusCodeValue());
 	        
-	        AU11Response ret = objectMapper.readValue(response.getBody().asText(), AU11Response.class);
-			
-			return ret;
-		} catch (Exception e) {
+	        if(response.getStatusCode() == HttpStatus.OK) {
+	        	AU11Response ret = objectMapper.readValue(response.getBody().toString(), AU11Response.class);
+				
+				return ret;
+	        } else
+	        	throw new MydataException(String.format("http status is not 200 : received response { %s }", response.getBody().toPrettyString()));
+		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 			throw new MydataException("error while reading response");
 		}

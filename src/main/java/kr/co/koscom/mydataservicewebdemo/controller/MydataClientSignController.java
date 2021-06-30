@@ -3,6 +3,7 @@ package kr.co.koscom.mydataservicewebdemo.controller;
 
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,7 @@ public class MydataClientSignController {
 				X509Certificate cert = (X509Certificate) item.getCert();
 				map.put("cert_id", index);
 				map.put("cert_cn", cert.getSubjectDN().toString());
-				map.put("cert_encoded", VarUtils.base64_url_encoding(cert.getEncoded()));
+				map.put("cert_encoded", Base64.getUrlEncoder().encode(cert.getEncoded()));
 				
 				ret.add(map);
 			}
