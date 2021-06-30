@@ -44,17 +44,17 @@ public class IntgAuthController {
 			HttpServletResponse servletResponse,
 			AU11Request request) {
 		
-		Map<String, String> map = 
-				objectMapper.convertValue(request, new TypeReference<Map<String, String>>() {});
-		
-		MydataSignVerifyWrapper wrapper = MydataSignVerifyWrapper.getInstance(context.getDataProvidersCpCodeMap());
-		
-		try {
-			wrapper.verifySign(map);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new MydataException("error while verifying signature or processing ucpid request");
-		}
+//		Map<String, String> map = 
+//				objectMapper.convertValue(request, new TypeReference<Map<String, String>>() {});
+//		
+//		MydataSignVerifyWrapper wrapper = MydataSignVerifyWrapper.getInstance(context.getDataProvidersCpCodeMap());
+//		
+//		try {
+//			wrapper.verifySign(map);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			throw new MydataException("error while verifying signature or processing ucpid request");
+//		}
 		
     	String requestPath = servletRequest.getRequestURI();
     	DataProviderConfig dataProvider = context.getDataProviders().get(request.getOrgCode());

@@ -13,6 +13,7 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.net.ssl.SSLContext;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -202,10 +203,18 @@ public class MtlsRestClient {
 	private HttpHeaders makeCommonRequestHeaders() {
 		HttpHeaders headers = new HttpHeaders();
 		//headers.add("ci", "TEF0101/AsCfLyJMF4bNFu4oWUHopstoUokAi2nsZtM78tch8SeegAHM9P8hJG1vpNe1RcvPRrl3b/MOC9999999");
-		headers.add("x-tranId", "1234567890");
+		headers.add("x-api-tran-id", makeApiTranId());
 		return headers;
 	}
 
+	private String makeApiTranId() {
+		String senderOrgCode = context.getService().getOrgCode();
+		String senderType = "M"; // mydata service
+		String seq = StringUtils.leftPad(Long.toString(System.currentTimeMillis()), 14, "0");	// TODO : 하루 내 unique 값이어야함
+		
+		return senderOrgCode + senderType + seq;
+	}
+	
 	private ObjectMapper getObjectMapper() {
 		if(objectMapper != null) {
 			return objectMapper;
