@@ -3,6 +3,8 @@ package kr.co.koscom.mydataservicewebdemo.controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,7 +26,8 @@ import kr.co.koscom.mydataservicewebdemo.model.MydataException;
 
 @RestController
 public class IntgAuthController {
-	
+	private static Logger logger = LoggerFactory.getLogger(IntgAuthController.class);
+
 	@Autowired
 	private MydataServiceContext context;
 	
@@ -52,6 +55,7 @@ public class IntgAuthController {
 //			throw new MydataException("error while verifying signature or processing ucpid request");
 //		}
 		
+		logger.info(request.toString());
     	String requestPath = servletRequest.getRequestURI();
     	DataProviderConfig dataProvider = context.getDataProviders().get(request.getOrgCode());
     	
