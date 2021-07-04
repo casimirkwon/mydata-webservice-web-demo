@@ -14,12 +14,16 @@ import lombok.Data;
 @ApiModel
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class EF01Request {
-	@ApiModelProperty(notes = "기관코드", example = "ZWAACP0000")
+//	@ApiModelProperty(notes = "기관코드", example = "ZWAACP0000")
 	@NotBlank
-	@Size(min = 10, max=10, message = "입력된 기관코드 '${validatedValue}'는 {max}자리 이어야 합니다.")
+//	@Size(min = 10, max=10, message = "입력된 기관코드 '${validatedValue}'는 {max}자리 이어야 합니다.")
 	private String orgCode;
 	
+	@NotBlank
 	private String searchTimestamp;
 	
+	@NotBlank
 	private String limit;
+	
+	private String nextPage;
 }

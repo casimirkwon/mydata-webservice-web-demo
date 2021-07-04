@@ -2,6 +2,7 @@ package kr.co.koscom.mydataservicewebdemo.controller;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class IntgAuthController {
 	@PostMapping(value = "/oauth/2.0/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_VALUE )
 	public AU11Response token(HttpServletRequest servletRequest,
 			HttpServletResponse servletResponse,
-			AU11Request request) {
+			@Valid AU11Request request) {
 		
 //		Map<String, String> map = 
 //				objectMapper.convertValue(request, new TypeReference<Map<String, String>>() {});

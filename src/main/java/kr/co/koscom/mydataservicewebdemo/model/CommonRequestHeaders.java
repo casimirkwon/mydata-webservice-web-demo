@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class CommonRequestHeaders {
 
-	private String xTranId;
+	private String xApiTranId;
 	
 }

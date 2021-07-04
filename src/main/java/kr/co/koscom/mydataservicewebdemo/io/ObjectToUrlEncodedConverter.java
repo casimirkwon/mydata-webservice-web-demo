@@ -15,9 +15,6 @@ import org.springframework.http.converter.HttpMessageNotWritableException;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 public class ObjectToUrlEncodedConverter implements HttpMessageConverter {
 	private static final String Encoding = "UTF-8";
@@ -52,15 +49,6 @@ public class ObjectToUrlEncodedConverter implements HttpMessageConverter {
 	public void write(Object o, MediaType contentType, HttpOutputMessage outputMessage)
 			throws HttpMessageNotWritableException {
 		if (o != null) {
-			
-			JsonNaming [] jsonNamingAnnotations = o.getClass().getDeclaredAnnotationsByType(JsonNaming.class);
-			
-			if(jsonNamingAnnotations.length > 0
-					&& jsonNamingAnnotations[0].value() == PropertyNamingStrategies.SNAKE_CASE.getClass())
-			{
-				
-			}
-			
 			String body = mapper.convertValue(o, UrlEncodedWriter.class).toString();
 
 			try {

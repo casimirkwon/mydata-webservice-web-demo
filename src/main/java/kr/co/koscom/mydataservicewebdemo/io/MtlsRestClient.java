@@ -130,17 +130,77 @@ public class MtlsRestClient {
 		});
 
 		LinkedMultiValueMap<String, String> linkedMultiValueMap = new LinkedMultiValueMap<>();
-		map.entrySet().forEach(e -> linkedMultiValueMap.add(e.getKey(), e.getValue()));
+		map.entrySet().forEach(e -> { if(e.getValue() != null) linkedMultiValueMap.add(e.getKey(), e.getValue()); });
 
 		return requestAsGet(url, linkedMultiValueMap);
 	}
 
-	public ResponseEntity<JsonNode> requestAsGet(String url, MultiValueMap<String, String> queryParams) {
-		HttpHeaders headers = makeCommonRequestHeaders();
-		HttpEntity<Object> request = new HttpEntity<>(headers);
-		ResponseEntity<String> response = restTemplate.exchange(
-				UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.GET,
-				request, String.class);
+	public ResponseEntity<JsonNode> requestAsGet(String url,Object data, String token) {
+		
+		Map<String, String> map = getObjectMapper().convertValue(data, new TypeReference<Map<String, String>>() {
+		});
+
+		LinkedMultiValueMap<String, String> linkedMultiValueMap = new LinkedMultiValueMap<>();
+		map.entrySet().forEach(e -> { if(e.getValue() != null) linkedMultiValueMap.add(e.getKey(), e.getValue()); });
+		
+		return requestAsGet(url, linkedMultiValueMap, token);
+	}
+
+	public ResponseEntity<JsonNode> requestAsGet(String url, MultiValueMap<String, String> queryParams, String token) {
+		HttpEntity<?> request;
+		
+		if(token != null) {
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Authorization", token);
+			request = new HttpEntity<>(headers);
+		} else {
+			request = HttpEntity.EMPTY;
+		}
+		
+		String finalUrl = UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString();
+
+		logger.info("finalUrl : " + finalUrl);
+		logger.info("request : " + request.toString());
+
+
+		ResponseEntity<JsonNode> response = restTemplate.exchange(
+				finalUrl, HttpMethod.GET,
+				request, JsonNode.class);
+		
+		logger.info("response : " + response.toString());
+		return response;
+//		try {
+//			//return new ResponseEntity<JsonNode>( objectMapper.readValue(response.getBody(), JsonNode.class), response.getStatusCode());
+//		} catch (JsonProcessingException e) {
+//			e.printStackTrace();
+//			throw new MydataException("error in reading response");
+//		}
+	}
+
+	public ResponseEntity<JsonNode> requestAsPostJson(String url, Object data) {
+		return requestAsPostJson(url, data, null);
+	}
+	
+	public ResponseEntity<JsonNode> requestAsPostJson(String url, Object data, MultiValueMap<String, String> queryParams) {
+		return requestAsPostJson(url, data, queryParams, null);
+	}
+	
+	public ResponseEntity<JsonNode> requestAsPostJson(String url, Object data, MultiValueMap<String, String> queryParams, String token) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+
+		if(token != null) {
+			headers.add("Authorization", token);
+		} 
+		
+		HttpEntity<?> request = new HttpEntity<>(data, headers);
+
+		String finalUrl = UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString();
+
+		logger.info("finalUrl : " + finalUrl);
+		logger.info("request : " + request.toString());
+
+		ResponseEntity<String> response = restTemplate.exchange(finalUrl, HttpMethod.POST, request, String.class);
 		
 		logger.info("response : " + response.toString());
 		try {
@@ -149,28 +209,6 @@ public class MtlsRestClient {
 			e.printStackTrace();
 			throw new MydataException("error in reading response");
 		}
-	
-				
-//		return restTemplate.exchange(
-//				UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.GET,
-//				request, JsonNode.class);
-	}
-
-	public ResponseEntity<JsonNode> requestAsPostJson(String url, Object data) {
-		return requestAsPostJson(url, data, null);
-	}
-	
-	public ResponseEntity<JsonNode> requestAsPostJson(String url, Object data, MultiValueMap<String, String> queryParams) {
-		HttpHeaders headers = makeCommonRequestHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-
-		HttpEntity<Object> request = new HttpEntity<>(data, headers);
-
-		ResponseEntity<Object> response = restTemplate.exchange(UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST, request, Object.class);
-		
-		logger.info("response : " + response.toString());
-		return new ResponseEntity<JsonNode>((JsonNode) response.getBody(), response.getStatusCode());
-		//return restTemplate.exchange(UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST, request, JsonNode.class);
 	}
 
 	public ResponseEntity<JsonNode> requestAsPostFormUrlEncoded(String url, Object data) {
@@ -179,31 +217,42 @@ public class MtlsRestClient {
 	
 	public ResponseEntity<JsonNode> requestAsPostFormUrlEncoded(String url, Object data,
 			MultiValueMap<String, String> queryParams) {
-		HttpHeaders headers = makeCommonRequestHeaders();
+		return requestAsPostFormUrlEncoded(url, data, queryParams, null);
+	}
+	
+	public ResponseEntity<JsonNode> requestAsPostFormUrlEncoded(String url, Object data,
+			MultiValueMap<String, String> queryParams, String token) {
+		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-		HttpEntity<Object> request = new HttpEntity<>(data, headers);
+		if(token != null) {
+			headers.add("Authorization", token);
+		} 
+		
+		HttpEntity<?> request = new HttpEntity<>(data, headers);
+		
+		String finalUrl = UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString();
+
+		logger.info("finalUrl : " + finalUrl);
+		logger.info("request : " + request.toString());
 
 		ResponseEntity<String> response = restTemplate.exchange(
-				UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST,
+				finalUrl, HttpMethod.POST,
 				request, String.class);
 		
 		logger.info("response : " + response.toString());
 		try {
 			return new ResponseEntity<JsonNode>( objectMapper.readValue(response.getBody(), JsonNode.class), response.getStatusCode());
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
 			throw new MydataException("error in reading response");
 		}
-
-		
-//		return restTemplate.exchange(UriComponentsBuilder.fromHttpUrl(url).queryParams(queryParams).build().toUriString(), HttpMethod.POST, request, JsonNode.class);
 	}
 
 	private HttpHeaders makeCommonRequestHeaders() {
 		HttpHeaders headers = new HttpHeaders();
 		//headers.add("ci", "TEF0101/AsCfLyJMF4bNFu4oWUHopstoUokAi2nsZtM78tch8SeegAHM9P8hJG1vpNe1RcvPRrl3b/MOC9999999");
 		headers.add("x-api-tran-id", makeApiTranId());
+		headers.add("executeSeCode", "test");
 		return headers;
 	}
 

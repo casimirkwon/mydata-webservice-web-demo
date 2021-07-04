@@ -1,7 +1,7 @@
 package kr.co.koscom.mydataservicewebdemo.config;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -10,17 +10,22 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import springfox.documentation.builders.ApiInfoBuilder;
+import springfox.documentation.builders.HttpAuthenticationBuilder;
 import springfox.documentation.builders.OAuthBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
+import springfox.documentation.service.ApiKey;
 import springfox.documentation.service.AuthorizationCodeGrant;
 import springfox.documentation.service.AuthorizationScope;
 import springfox.documentation.service.GrantType;
+import springfox.documentation.service.HttpAuthenticationScheme;
+import springfox.documentation.service.SecurityReference;
 import springfox.documentation.service.SecurityScheme;
 import springfox.documentation.service.TokenEndpoint;
 import springfox.documentation.service.TokenRequestEndpoint;
 import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spi.service.contexts.SecurityContext;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger.web.SecurityConfiguration;
 import springfox.documentation.swagger.web.SecurityConfigurationBuilder;
@@ -44,15 +49,31 @@ public class SpringFoxConfig {
           .apis(RequestHandlerSelectors.basePackage("kr.co.koscom.mydataservicewebdemo.controller"))              
           .paths(PathSelectors.any())                          
           .build()
-          .securitySchemes(Collections.singletonList(oauth()));
+//          .securitySchemes(Collections.singletonList(oauth()));
+          .securitySchemes(Arrays.asList(bearerJWT()))
+          .securityContexts(Arrays.asList(securityContext()));
     }
 
+    private SecurityContext securityContext() {
+		return SecurityContext
+				.builder()
+				.forPaths(PathSelectors.ant("/v1/**"))
+				.securityReferences( bearerAuth() ) 
+				.build();
+    }
+    
 	private ApiInfo getApiInfo() {
 		return new ApiInfoBuilder()
-                .title("Mydata efin API Tester App")
+                .title("Mydata API Tester App")
                 .build();
 	}
 	
+	private List<SecurityReference> bearerAuth() { 
+	    AuthorizationScope authorizationScope = new AuthorizationScope("default", "accessEverything"); 
+	    AuthorizationScope[] authorizationScopes = new AuthorizationScope[1]; 
+	    authorizationScopes[0] = authorizationScope; 
+	    return Arrays.asList(new SecurityReference("JWT", authorizationScopes)); 
+	}
 	
 	@Bean
 	List<GrantType> grantTypes() {
@@ -62,6 +83,7 @@ public class SpringFoxConfig {
         grantTypes.add(new AuthorizationCodeGrant(tokenRequestEndpoint, tokenEndpoint));
         return grantTypes;
 	}
+
 	
 	@Bean
     SecurityScheme oauth() {
@@ -71,7 +93,15 @@ public class SpringFoxConfig {
                 .grantTypes(grantTypes())
                 .build();
     }
-	
+
+	@Bean
+    SecurityScheme bearerJWT() {
+		return new ApiKey("JWT", "Authorization", "header");
+//		return HttpAuthenticationScheme.JWT_BEARER_BUILDER
+//				.name("JWT access token")
+//				.build();
+    }
+
 	private List<AuthorizationScope> scopes() {
 		List<AuthorizationScope> list = new ArrayList();
 		list.add(new AuthorizationScope("invest.list","(금융투자업권) 자산목록"));

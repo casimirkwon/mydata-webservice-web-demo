@@ -3,6 +3,8 @@ package kr.co.koscom.mydataservicewebdemo.model;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -13,6 +15,7 @@ import lombok.Data;
 @Data
 @ApiModel
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+@JsonInclude(Include.NON_NULL)
 public class EF01Response {
 	@ApiModelProperty(name = "기관코드", example = "ZWAACP0000")
 	@NotBlank
