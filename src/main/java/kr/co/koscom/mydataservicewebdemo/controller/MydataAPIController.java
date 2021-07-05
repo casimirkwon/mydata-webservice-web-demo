@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -108,10 +110,10 @@ public class MydataAPIController {
     
     
 	@ApiOperation(value = "Invest Accounts Basic")
-    @GetMapping(value = "/v1/invest/accounts/basic", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/v1/invest/accounts/basic", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public IV02Response v1_invest_accounts_basic(
     		@RequestHeader(value = "Authorization") @ApiParam(hidden = true) String token,
-    		@Valid @ModelAttribute IV02Request request, 
+    		@Valid @RequestBody IV02Request request, 
     		HttpServletRequest servletRequest,
     		HttpServletResponse servletResponse) {
     	String requestPath = servletRequest.getRequestURI();
@@ -126,7 +128,7 @@ public class MydataAPIController {
     	endpoint += requestPath;
     	
 		try {
-	        ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request, token);
+	        ResponseEntity<JsonNode> response = restClient.requestAsPostJson(endpoint, request, null, token);
 	        servletResponse.setStatus(response.getStatusCodeValue());
 	        
 	        if(response.getStatusCode() == HttpStatus.OK) {

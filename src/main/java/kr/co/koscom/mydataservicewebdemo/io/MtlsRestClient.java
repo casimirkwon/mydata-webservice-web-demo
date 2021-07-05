@@ -200,15 +200,16 @@ public class MtlsRestClient {
 		logger.info("finalUrl : " + finalUrl);
 		logger.info("request : " + request.toString());
 
-		ResponseEntity<String> response = restTemplate.exchange(finalUrl, HttpMethod.POST, request, String.class);
+		ResponseEntity<JsonNode> response = restTemplate.exchange(finalUrl, HttpMethod.POST, request, JsonNode.class);
 		
 		logger.info("response : " + response.toString());
-		try {
-			return new ResponseEntity<JsonNode>( objectMapper.readValue(response.getBody(), JsonNode.class), response.getStatusCode());
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-			throw new MydataException("error in reading response");
-		}
+		return response;
+//		try {
+//			return new ResponseEntity<JsonNode>( objectMapper.readValue(response.getBody(), JsonNode.class), response.getStatusCode());
+//		} catch (JsonProcessingException e) {
+//			e.printStackTrace();
+//			throw new MydataException("error in reading response");
+//		}
 	}
 
 	public ResponseEntity<JsonNode> requestAsPostFormUrlEncoded(String url, Object data) {
@@ -236,16 +237,17 @@ public class MtlsRestClient {
 		logger.info("finalUrl : " + finalUrl);
 		logger.info("request : " + request.toString());
 
-		ResponseEntity<String> response = restTemplate.exchange(
+		ResponseEntity<JsonNode> response = restTemplate.exchange(
 				finalUrl, HttpMethod.POST,
-				request, String.class);
+				request, JsonNode.class);
 		
 		logger.info("response : " + response.toString());
-		try {
-			return new ResponseEntity<JsonNode>( objectMapper.readValue(response.getBody(), JsonNode.class), response.getStatusCode());
-		} catch (JsonProcessingException e) {
-			throw new MydataException("error in reading response");
-		}
+		return response;
+//		try {
+//			return new ResponseEntity<JsonNode>( objectMapper.readValue(response.getBody(), JsonNode.class), response.getStatusCode());
+//		} catch (JsonProcessingException e) {
+//			throw new MydataException("error in reading response");
+//		}
 	}
 
 	private HttpHeaders makeCommonRequestHeaders() {
