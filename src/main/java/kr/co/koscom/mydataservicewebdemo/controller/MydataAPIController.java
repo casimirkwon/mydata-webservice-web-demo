@@ -46,7 +46,9 @@ public class MydataAPIController {
 
 	@ApiOperation(value = "Prepaid Accounts List")
     @GetMapping(value = "/v1/efin/prepaid", produces = MediaType.APPLICATION_JSON_VALUE)
-    public EF01Response v1_efin_prepaid(@Valid @ModelAttribute EF01Request request, HttpServletRequest servletRequest,
+    public EF01Response v1_efin_prepaid(
+    		@RequestHeader(value = "Authorization") @ApiParam(hidden = true) String token,
+    		@Valid @ModelAttribute EF01Request request, HttpServletRequest servletRequest,
     		HttpServletResponse servletResponse) {
     	String requestPath = servletRequest.getRequestURI();
     	
@@ -59,7 +61,7 @@ public class MydataAPIController {
     	endpoint += requestPath;
     	
 		try {
-	        ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request);
+	        ResponseEntity<JsonNode> response = restClient.requestAsGet(endpoint, request, token);
 	        servletResponse.setStatus(response.getStatusCodeValue());
 	        
 	        if(response.getStatusCode() == HttpStatus.OK) {

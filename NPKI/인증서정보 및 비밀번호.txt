@@ -8,3 +8,19 @@ ss: 2021060199999
 
 cpCode : C0123456789A
 ispUrlInfo : www.mydata.co.kr
+
+#한국정보인증
+DN: cn=KICA-UCPID-ISP(dev),ou=RA센터,ou=licensedCA,o=KICA,c=KR
+비밀번호: signgate1!
+서버: 121.254.188.161:9090
+cpCode: AMdNdQPZ0GET
+
+#한국전자인증
+DN: CN=ucpid-isp,OU=테스트,OU=등록기관,OU=AccreditedCA,O=CrossCert,C=KR
+비밀번호: crosscert12!@
+서버: 203.248.34.63:17586
+cpCode: E001C863083O
+
+#금융결제원
+서버: 203.233.91.231:4719
+
