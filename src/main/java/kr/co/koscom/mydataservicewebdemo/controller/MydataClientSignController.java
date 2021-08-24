@@ -130,7 +130,7 @@ public class MydataClientSignController {
         
     	try {
 
-	    	return wrapper.makeSign(objectMapper.writeValueAsString(request), certId);
+	    	return wrapper.makeSign(objectMapper.writeValueAsString(request), certId).toString(4);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new MydataException("error");
